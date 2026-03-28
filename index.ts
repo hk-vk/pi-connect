@@ -1,6 +1,6 @@
 import { DynamicBorder, type ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { getEnvApiKey } from "@mariozechner/pi-ai";
-import { Container, SelectList, Text, type SelectItem } from "@mariozechner/pi-tui";
+import { Container, Key, matchesKey, SelectList, Text, type SelectItem } from "@mariozechner/pi-tui";
 import { exec as execCb } from "node:child_process";
 
 const DISPLAY_NAME_OVERRIDES: Record<string, string> = {
@@ -109,13 +109,17 @@ function getApiCapableProviderIds(ctx: any): string[] {
 
 async function pickItem(ctx: any, title: string, subtitle: string | undefined, items: SelectItem[]): Promise<SelectItem | null> {
   return ctx.ui.custom<SelectItem | null>((tui, theme, _kb, done) => {
+    let query = "";
     const container = new Container();
     container.addChild(new DynamicBorder((s: string) => theme.fg("accent", s)));
     container.addChild(new Text(theme.fg("text", theme.bold(title)), 1, 0));
     if (subtitle) container.addChild(new Text(theme.fg("dim", subtitle), 1, 0));
+
+    const searchLine = new Text(theme.fg("muted", "Search: type to filter"), 1, 0);
+    container.addChild(searchLine);
     container.addChild(new Text("", 0, 0));
 
-    const maxVisible = Math.max(6, Math.min(items.length, Math.floor((tui.terminal.rows - 12) / 2)));
+    const maxVisible = Math.max(6, Math.min(items.length, Math.floor((tui.terminal.rows - 13) / 2)));
     const list = new SelectList(items, maxVisible, {
       selectedPrefix: (t) => theme.fg("accent", t),
       selectedText: (t) => theme.fg("accent", theme.bold(t)),
@@ -127,15 +131,52 @@ async function pickItem(ctx: any, title: string, subtitle: string | undefined, i
     list.onCancel = () => done(null);
     container.addChild(list);
 
+    const updateSearchLine = () => {
+      searchLine.setText(
+        query
+          ? `${theme.fg("accent", "Search:")} ${theme.fg("text", query)}`
+          : theme.fg("muted", "Search: type to filter")
+      );
+      list.setFilter(query);
+    };
+    updateSearchLine();
+
     container.addChild(new Text("", 0, 0));
     container.addChild(new Text(`${theme.fg("success", "●")} connected   ${theme.fg("warning", "◌")} env   ${theme.fg("muted", "○")} new`, 1, 0));
-    container.addChild(new Text(theme.fg("dim", "↑↓ navigate  •  Enter select  •  Esc cancel"), 1, 0));
+    container.addChild(new Text(theme.fg("dim", "type to search  •  ↑↓ navigate  •  Enter select  •  Esc cancel/clear"), 1, 0));
     container.addChild(new DynamicBorder((s: string) => theme.fg("accent", s)));
 
     return {
       render: (w) => container.render(w),
       invalidate: () => container.invalidate(),
       handleInput: (data) => {
+        if (matchesKey(data, Key.escape)) {
+          if (query) {
+            query = "";
+            updateSearchLine();
+            tui.requestRender();
+            return;
+          }
+          done(null);
+          return;
+        }
+
+        if (matchesKey(data, Key.backspace)) {
+          if (query) {
+            query = query.slice(0, -1);
+            updateSearchLine();
+            tui.requestRender();
+            return;
+          }
+        }
+
+        if (data.length === 1 && data >= " " && data !== "\u007f") {
+          query += data;
+          updateSearchLine();
+          tui.requestRender();
+          return;
+        }
+
         list.handleInput(data);
         tui.requestRender();
       },
