@@ -1,12 +1,13 @@
 {
   "name": "pi-connect",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Unified OAuth & API key login for pi — OpenCode-inspired UI to connect 15+ providers from one /connect command.",
   "type": "module",
   "license": "MIT",
   "keywords": [
     "pi-package",
     "pi-extension",
+    "pi",
     "oauth",
     "api-key",
     "provider-login",
@@ -26,7 +27,8 @@
   "files": [
     "index.ts",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "assets"
   ],
   "publishConfig": {
     "access": "public"
@@ -34,7 +36,8 @@
   "pi": {
     "extensions": [
       "./index.ts"
-    ]
+    ],
+    "image": "https://raw.githubusercontent.com/hk-vk/pi-connect/main/assets/screenshot.png"
   },
   "peerDependencies": {
     "@mariozechner/pi-coding-agent": "*",
