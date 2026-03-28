@@ -1,6 +1,6 @@
 import { DynamicBorder, type ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { getEnvApiKey } from "@mariozechner/pi-ai";
-import { Container, decodeKittyPrintable, Key, matchesKey, SelectList, Text, type SelectItem } from "@mariozechner/pi-tui";
+import { Container, Input, Key, matchesKey, SelectList, Text, type SelectItem } from "@mariozechner/pi-tui";
 import { exec as execCb } from "node:child_process";
 
 const DISPLAY_NAME_OVERRIDES: Record<string, string> = {
@@ -109,17 +109,18 @@ function getApiCapableProviderIds(ctx: any): string[] {
 
 async function pickItem(ctx: any, title: string, subtitle: string | undefined, items: SelectItem[]): Promise<SelectItem | null> {
   return ctx.ui.custom<SelectItem | null>((tui, theme, _kb, done) => {
-    let query = "";
     const container = new Container();
     container.addChild(new DynamicBorder((s: string) => theme.fg("accent", s)));
     container.addChild(new Text(theme.fg("text", theme.bold(title)), 1, 0));
     if (subtitle) container.addChild(new Text(theme.fg("dim", subtitle), 1, 0));
 
-    const searchLine = new Text(theme.fg("muted", "Search: type to filter"), 1, 0);
-    container.addChild(searchLine);
+    container.addChild(new Text(theme.fg("muted", "Search"), 1, 0));
+    const searchInput = new Input();
+    searchInput.focused = true;
+    container.addChild(searchInput);
     container.addChild(new Text("", 0, 0));
 
-    const maxVisible = Math.max(6, Math.min(items.length, Math.floor((tui.terminal.rows - 13) / 2)));
+    const maxVisible = Math.max(6, Math.min(items.length, Math.floor((tui.terminal.rows - 14) / 2)));
     const list = new SelectList(items, maxVisible, {
       selectedPrefix: (t) => theme.fg("accent", t),
       selectedText: (t) => theme.fg("accent", theme.bold(t)),
@@ -131,15 +132,10 @@ async function pickItem(ctx: any, title: string, subtitle: string | undefined, i
     list.onCancel = () => done(null);
     container.addChild(list);
 
-    const updateSearchLine = () => {
-      searchLine.setText(
-        query
-          ? `${theme.fg("accent", "Search:")} ${theme.fg("text", query)}`
-          : theme.fg("muted", "Search: type to filter")
-      );
-      list.setFilter(query);
+    const updateFilter = () => {
+      list.setFilter(searchInput.getValue());
     };
-    updateSearchLine();
+    updateFilter();
 
     container.addChild(new Text("", 0, 0));
     container.addChild(new Text(`${theme.fg("success", "●")} connected   ${theme.fg("warning", "◌")} env   ${theme.fg("muted", "○")} new`, 1, 0));
@@ -151,9 +147,9 @@ async function pickItem(ctx: any, title: string, subtitle: string | undefined, i
       invalidate: () => container.invalidate(),
       handleInput: (data) => {
         if (matchesKey(data, Key.escape)) {
-          if (query) {
-            query = "";
-            updateSearchLine();
+          if (searchInput.getValue()) {
+            searchInput.setValue("");
+            updateFilter();
             tui.requestRender();
             return;
           }
@@ -161,24 +157,14 @@ async function pickItem(ctx: any, title: string, subtitle: string | undefined, i
           return;
         }
 
-        if (matchesKey(data, Key.backspace)) {
-          if (query) {
-            query = query.slice(0, -1);
-            updateSearchLine();
-            tui.requestRender();
-            return;
-          }
-        }
-
-        const printable = decodeKittyPrintable(data) ?? (data.length === 1 && data >= " " && data !== "\u007f" ? data : undefined);
-        if (printable) {
-          query += printable;
-          updateSearchLine();
+        if (matchesKey(data, Key.up) || matchesKey(data, Key.down) || matchesKey(data, Key.enter) || matchesKey(data, Key.return) || matchesKey(data, Key.pageUp) || matchesKey(data, Key.pageDown)) {
+          list.handleInput(data);
           tui.requestRender();
           return;
         }
 
-        list.handleInput(data);
+        searchInput.handleInput(data);
+        updateFilter();
         tui.requestRender();
       },
     };
