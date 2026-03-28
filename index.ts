@@ -191,9 +191,9 @@ export default function piConnectExtension(pi: ExtensionAPI) {
     const apiProviderIds = getApiCapableProviderIds(ctx);
 
     const statusIcon = (providerId: string) => {
-      if (authStorage.has(providerId)) return ctx.ui.theme.fg("success", "●");
-      if (getEnvApiKey(providerId)) return ctx.ui.theme.fg("warning", "◌");
-      return ctx.ui.theme.fg("muted", "○");
+      if (authStorage.has(providerId)) return "●";
+      if (getEnvApiKey(providerId)) return "◌";
+      return "○";
     };
 
     const items: SelectItem[] = [];
@@ -201,7 +201,7 @@ export default function piConnectExtension(pi: ExtensionAPI) {
     if (oauthProviders.length > 0) {
       items.push({
         value: "__section_oauth",
-        label: ctx.ui.theme.bold("OAuth providers"),
+        label: "OAuth providers",
         description: "login via browser"
       });
       for (const provider of oauthProviders) {
@@ -216,7 +216,7 @@ export default function piConnectExtension(pi: ExtensionAPI) {
     if (apiProviderIds.length > 0) {
       items.push({
         value: "__section_api",
-        label: ctx.ui.theme.bold("API key providers"),
+        label: "API key providers",
         description: "paste and save key"
       });
       for (const providerId of apiProviderIds) {
@@ -284,8 +284,8 @@ export default function piConnectExtension(pi: ExtensionAPI) {
 
       if (oauthIds.has(providerId) && apiIds.has(providerId)) {
         const method = await pickItem(ctx, prettyProviderName(providerId), "Choose how to connect", [
-          { value: "oauth", label: ctx.ui.theme.bold("OAuth"), description: "browser login" },
-          { value: "api", label: ctx.ui.theme.bold("API key"), description: "paste and save key" },
+          { value: "oauth", label: "OAuth", description: "browser login" },
+          { value: "api", label: "API key", description: "paste and save key" },
         ]);
         if (!method) return;
         if (method.value === "oauth") {
@@ -316,7 +316,7 @@ export default function piConnectExtension(pi: ExtensionAPI) {
       }
       const items: SelectItem[] = providers.map((providerId) => ({
         value: providerId,
-        label: `${ctx.ui.theme.fg("success", "●")} ${ctx.ui.theme.bold(prettyProviderName(providerId))}`,
+        label: `● ${prettyProviderName(providerId)}`,
         description: "Connected"
       }));
       const selected = await pickItem(ctx, "Disconnect provider", "Remove a saved credential", items);
