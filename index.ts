@@ -1,6 +1,6 @@
 import { DynamicBorder, type ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { getEnvApiKey } from "@mariozechner/pi-ai";
-import { Container, Input, Key, matchesKey, SelectList, Text, type SelectItem } from "@mariozechner/pi-tui";
+import { Container, fuzzyFilter, Input, Key, matchesKey, SelectList, Text, type SelectItem } from "@mariozechner/pi-tui";
 import { exec as execCb } from "node:child_process";
 
 const DISPLAY_NAME_OVERRIDES: Record<string, string> = {
@@ -121,21 +121,53 @@ async function pickItem(ctx: any, title: string, subtitle: string | undefined, i
     container.addChild(new Text("", 0, 0));
 
     const maxVisible = Math.max(6, Math.min(items.length, Math.floor((tui.terminal.rows - 14) / 2)));
-    const list = new SelectList(items, maxVisible, {
-      selectedPrefix: (t) => theme.fg("accent", t),
-      selectedText: (t) => theme.fg("accent", theme.bold(t)),
-      description: (t) => theme.fg("muted", t),
-      scrollInfo: (t) => theme.fg("dim", t),
-      noMatch: (t) => theme.fg("warning", t),
-    });
-    list.onSelect = (item) => done(item);
-    list.onCancel = () => done(null);
-    container.addChild(list);
+    const listContainer = new Container();
+    container.addChild(listContainer);
 
-    const updateFilter = () => {
-      list.setFilter(searchInput.getValue());
+    let list: SelectList;
+
+    const sectionOauth = items.find((item) => item.value === "__section_oauth");
+    const sectionApi = items.find((item) => item.value === "__section_api");
+    const itemTheme = {
+      selectedPrefix: (t: string) => theme.fg("accent", t),
+      selectedText: (t: string) => theme.fg("accent", theme.bold(t)),
+      description: (t: string) => theme.fg("muted", t),
+      scrollInfo: (t: string) => theme.fg("dim", t),
+      noMatch: (t: string) => theme.fg("warning", t),
     };
-    updateFilter();
+
+    const rebuildList = () => {
+      const query = searchInput.getValue().trim();
+      const normalItems = items.filter((item) => !item.value.startsWith("__section_"));
+      const filtered = query
+        ? fuzzyFilter(normalItems, query, (item) => `${item.label} ${item.description ?? ""}`)
+        : normalItems;
+
+      const oauthItems = filtered.filter((item) => item.value.startsWith("oauth:"));
+      const apiItems = filtered.filter((item) => item.value.startsWith("api:"));
+
+      const displayItems: SelectItem[] = [];
+      if (oauthItems.length > 0 && sectionOauth) displayItems.push(sectionOauth);
+      displayItems.push(...oauthItems);
+      if (apiItems.length > 0 && sectionApi) displayItems.push(sectionApi);
+      displayItems.push(...apiItems);
+
+      const finalItems = displayItems.length > 0
+        ? displayItems
+        : [{ value: "__empty", label: "No matching providers", description: "Try a different search" }];
+
+      list = new SelectList(finalItems, maxVisible, itemTheme);
+      list.onSelect = (item) => {
+        if (item.value.startsWith("__section_") || item.value === "__empty") return;
+        done(item);
+      };
+      list.onCancel = () => done(null);
+
+      listContainer.clear();
+      listContainer.addChild(list);
+    };
+
+    rebuildList();
 
     container.addChild(new Text("", 0, 0));
     container.addChild(new Text(`${theme.fg("success", "●")} connected   ${theme.fg("warning", "◌")} env   ${theme.fg("muted", "○")} new`, 1, 0));
@@ -149,7 +181,7 @@ async function pickItem(ctx: any, title: string, subtitle: string | undefined, i
         if (matchesKey(data, Key.escape)) {
           if (searchInput.getValue()) {
             searchInput.setValue("");
-            updateFilter();
+            rebuildList();
             tui.requestRender();
             return;
           }
@@ -164,7 +196,7 @@ async function pickItem(ctx: any, title: string, subtitle: string | undefined, i
         }
 
         searchInput.handleInput(data);
-        updateFilter();
+        rebuildList();
         tui.requestRender();
       },
     };
