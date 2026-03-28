@@ -1,0 +1,21 @@
+{
+  "name": "pi-connect",
+  "version": "0.1.0",
+  "description": "Unified OAuth & API key login for pi — OpenCode-inspired UI to connect 15+ providers from one /connect command.",
+  "type": "module",
+  "license": "MIT",
+  "keywords": [
+    "pi-package",
+    "pi-extension"
+  ],
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@mariozechner/pi-coding-agent": "*",
+    "@mariozechner/pi-ai": "*",
+    "@mariozechner/pi-tui": "*"
+  }
+}
