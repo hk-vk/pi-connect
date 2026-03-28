@@ -1,6 +1,6 @@
 import { DynamicBorder, type ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { getEnvApiKey } from "@mariozechner/pi-ai";
-import { Container, Key, matchesKey, SelectList, Text, type SelectItem } from "@mariozechner/pi-tui";
+import { Container, decodeKittyPrintable, Key, matchesKey, SelectList, Text, type SelectItem } from "@mariozechner/pi-tui";
 import { exec as execCb } from "node:child_process";
 
 const DISPLAY_NAME_OVERRIDES: Record<string, string> = {
@@ -170,8 +170,9 @@ async function pickItem(ctx: any, title: string, subtitle: string | undefined, i
           }
         }
 
-        if (data.length === 1 && data >= " " && data !== "\u007f") {
-          query += data;
+        const printable = decodeKittyPrintable(data) ?? (data.length === 1 && data >= " " && data !== "\u007f" ? data : undefined);
+        if (printable) {
+          query += printable;
           updateSearchLine();
           tui.requestRender();
           return;
