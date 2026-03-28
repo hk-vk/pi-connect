@@ -1,10 +1,10 @@
 # pi-connect
 
-![pi-connect screenshot](https://raw.githubusercontent.com/hk-vk/pi-connect/main/assets/screenshot.png)
+![pi-connect screenshot](https://raw.githubusercontent.com/hk-vk/pi-connect/main/assets/screenshot.png?v=202603281825)
 
-**Unified OAuth & API key login for pi** — OpenCode-inspired UI to connect 15+ providers from one `/connect` command.
+Unified OAuth and API key login for pi with an OpenCode-inspired UI.
 
-Paste & save API keys, or login with OAuth, for providers supported by pi like Anthropic, OpenAI, OpenCode, OpenRouter, Gemini, Groq, and more.
+Connect 15+ providers with one `/connect` command.
 
 Official pi providers list:
 - https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/providers.md
