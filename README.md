@@ -10,7 +10,7 @@ Official pi providers list:
 ## Install
 
 ```bash
-pi install git:github.com/YOUR_USERNAME/pi-connect
+pi install git:github.com/hk-vk/pi-connect
 ```
 
 ## Usage

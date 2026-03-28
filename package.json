@@ -6,8 +6,31 @@
   "license": "MIT",
   "keywords": [
     "pi-package",
-    "pi-extension"
+    "pi-extension",
+    "oauth",
+    "api-key",
+    "provider-login",
+    "auth"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hk-vk/pi-connect.git"
+  },
+  "homepage": "https://github.com/hk-vk/pi-connect#readme",
+  "bugs": {
+    "url": "https://github.com/hk-vk/pi-connect/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "index.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "pi": {
     "extensions": [
       "./index.ts"
